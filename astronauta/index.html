@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🚀 ASTRONAUTA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Orbitron', sans-serif; background: #000; overflow: hidden; touch-action: none; }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* INTRO SCREEN */
+        #intro-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0a0a2a 0%, #1a0a3a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .title {
+            font-size: clamp(2rem, 10vw, 4rem);
+            color: #0ff;
+            text-shadow: 0 0 20px #0ff, 0 0 40px #f0f;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .subtitle {
+            color: #f0f;
+            margin: 20px 0;
+            font-size: 1rem;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(45deg, #0ff, #f0f);
+            border: none;
+            border-radius: 30px;
+            color: #000;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 10px; left: 10px; right: 10px;
+            display: flex;
+            justify-content: space-between;
+            color: #fff;
+            font-size: 14px;
+            text-shadow: 0 0 5px #0ff;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #hud-left, #hud-right {
+            display: flex;
+            gap: 15px;
+        }
+
+        .hearts { color: #f00; }
+
+        /* CONTROLS */
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0; right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 20;
+        }
+
+        #joystick {
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 255, 255, 0.2);
+            border: 3px solid #0ff;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        #joystick-knob {
+            width: 50px;
+            height: 50px;
+            background: #0ff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #fire-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-template-rows: repeat(2, 50px);
+            gap: 5px;
+        }
+
+        .fire-btn {
+            background: rgba(255, 0, 255, 0.5);
+            border: 2px solid #f0f;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .fire-btn:active { background: #f0f; }
+
+        #fire-up { grid-column: 2; grid-row: 1; }
+        #fire-left { grid-column: 1; grid-row: 2; }
+        #fire-down { grid-column: 2; grid-row: 2; }
+        #fire-right { grid-column: 3; grid-row: 2; }
+
+        /* PAUSE */
+        #pause-btn {
+            position: absolute;
+            top: 10px; right: 10px;
+            width: 40px; height: 40px;
+            background: rgba(255, 255, 0, 0.5);
+            border: 2px solid #ff0;
+            border-radius: 10px;
+            color: #000;
+            font-size: 20px;
+            z-index: 30;
+            cursor: pointer;
+        }
+
+        /* OVERLAY */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .overlay h2 { color: #0ff; font-size: 2rem; margin-bottom: 20px; }
+        .overlay p { color: #fff; margin: 10px 0; }
+
+        #gameover-screen h2 { color: #f00 !important; }
+        #victory-screen h2 { color: #0f0 !important; }
+
+        /* BOSS BAR */
+        #boss-bar {
+            position: absolute;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 300px;
+            display: none;
+            z-index: 15;
+        }
+
+        #boss-name {
+            color: #f00;
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        #boss-health-bar {
+            width: 100%;
+            height: 15px;
+            background: #333;
+            border: 2px solid #f00;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #boss-health-fill {
+            height: 100%;
+            width: 100%;
+            background: #f00;
+            transition: width 0.3s;
+        }
+
+        /* LEVEL ANNOUNCE */
+        #level-announce {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 40;
+            display: none;
+        }
+
+        #level-announce h2 {
+            font-size: 3rem;
+            color: #0ff;
+            text-shadow: 0 0 20px #0ff;
+        }
+
+        #level-announce p {
+            font-size: 1.5rem;
+            color: #f0f;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- INTRO -->
+        <div id="intro-screen">
+            <h1 class="title">🚀 ASTRONAUTA</h1>
+            <p class="subtitle">Rescate Interplanetario</p>
+            <p style="color:#fff;max-width:300px;text-align:center;margin:20px;">
+                La astronauta Luna debe rescatar a su novia Nova de un planeta lejano.
+            </p>
+            <button class="btn" id="start-btn">▶ JUGAR</button>
+        </div>
+
+        <!-- HUD -->
+        <div id="hud" style="display:none;">
+            <div id="hud-left">
+                <div><span class="hearts" id="lives">❤❤❤</span></div>
+                <div>PUNTOS: <span id="score">0</span></div>
+                <div>NIVEL: <span id="level">1</span></div>
+            </div>
+            <div id="hud-right">
+                <div>PODER: <span id="powerup">-</span></div>
+            </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div id="controls" style="display:none;">
+            <div id="joystick">
+                <div id="joystick-knob"></div>
+            </div>
+            <div id="fire-buttons">
+                <button class="fire-btn" id="fire-up">▲</button>
+                <button class="fire-btn" id="fire-left">◀</button>
+                <button class="fire-btn" id="fire-down">▼</button>
+                <button class="fire-btn" id="fire-right">▶</button>
+            </div>
+        </div>
+
+        <button id="pause-btn" style="display:none;">⏸</button>
+
+        <!-- BOSS BAR -->
+        <div id="boss-bar">
+            <div id="boss-name">MINIBOSS</div>
+            <div id="boss-health-bar">
+                <div id="boss-health-fill"></div>
+            </div>
+        </div>
+
+        <!-- LEVEL ANNOUNCE -->
+        <div id="level-announce">
+            <h2 id="announce-level">NIVEL 1</h2>
+            <p id="announce-planet">TIERRA</p>
+        </div>
+
+        <!-- PAUSE -->
+        <div id="pause-screen" class="overlay">
+            <h2>⏸ PAUSA</h2>
+            <button class="btn" id="resume-btn">CONTINUAR</button>
+            <button class="btn" id="menu-btn" style="background:#f00;margin-top:10px;">MENU</button>
+        </div>
+
+        <!-- GAME OVER -->
+        <div id="gameover-screen" class="overlay">
+            <h2>GAME OVER</h2>
+            <p>Puntuacion: <span id="final-score">0</span></p>
+            <p>Nivel: <span id="final-level">1</span></p>
+            <button class="btn" id="retry-btn">REINTENTAR</button>
+            <button class="btn" id="gameover-menu" style="background:#f00;margin-top:10px;">MENU</button>
+        </div>
+
+        <!-- VICTORY -->
+        <div id="victory-screen" class="overlay">
+            <h2>🎉 RESCATE EXITOSO 🎉</h2>
+            <p style="font-size:2rem;">👩‍🚀 + ❤️ + 👩</p>
+            <p>Luna y Nova regresan a la Tierra!</p>
+            <p>Puntuacion: <span id="victory-score">0</span></p>
+            <button class="btn" id="play-again">JUGAR DE NUEVO</button>
+        </div>
+
+        <!-- LEVEL COMPLETE -->
+        <div id="levelcomplete-screen" class="overlay">
+            <h2>¡NIVEL COMPLETADO!</h2>
+            <p>Puntuacion: <span id="level-score">0</span></p>
+            <div id="stars" style="font-size:2rem;margin:10px;">⭐⭐⭐</div>
+            <button class="btn" id="next-level">SIGUIENTE NIVEL</button>
+        </div>
+    </div>
+
+    <script>
+    // ==================== GAME CONFIG ====================
+    const LEVELS = {
+        1: { name: 'TIERRA', bg: '#1a3a5c', enemies: 5, bossHP: 80 },
+        2: { name: 'MARTE', bg: '#8b2500', enemies: 8, bossHP: 120 },
+        3: { name: 'VENUS', bg: '#8b6914', enemies: 10, bossHP: 160 },
+        4: { name: 'JUPITER', bg: '#4a2c0a', enemies: 12, bossHP: 200 },
+        5: { name: 'SATURNO', bg: '#3d3a1a', enemies: 14, bossHP: 250 },
+        6: { name: 'NEPTUNO', bg: '#0a2a4a', enemies: 16, bossHP: 300 },
+        7: { name: 'PLUTON', bg: '#1a1a2a', enemies: 18, bossHP: 350 },
+        8: { name: 'GALAXIA X', bg: '#2a0a3a', enemies: 20, bossHP: 400 },
+        9: { name: 'NEBULOSA', bg: '#1a0a2a', enemies: 25, bossHP: 500 },
+        10: { name: 'MUNDO ALIEN', bg: '#0a0a0a', enemies: 30, bossHP: 800 }
+    };
+
+    // ==================== GAME STATE ====================
+    let canvas, ctx;
+    let gameState = 'intro';
+    let currentLevel = 1;
+    let score = 0;
+    let lives = 3;
+    let invincible = false;
+    let invincibleTimer = 0;
+    let powerup = null;
+    let powerupTimer = 0;
+
+    // Entities
+    let player = null;
+    let bullets = [];
+    let enemies = [];
+    let enemyBullets = [];
+    let particles = [];
+    let powerups = [];
+    let boss = null;
+    let bossSpawned = false;
+    let enemiesSpawned = 0;
+
+    // Input
+    let keys = { up: false, down: false, left: false, right: false };
+    let joystickActive = false;
+    let joystickCenter = { x: 0, y: 0 };
+
+    // Audio context
+    let audioCtx = null;
+
+    // ==================== AUDIO ====================
+    function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function playSound(freq, duration, type = 'square') {
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.value = 0.1;
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playShoot() { playSound(880, 0.05); }
+    function playExplosion() { playSound(150, 0.2, 'sawtooth'); }
+    function playHit() { playSound(300, 0.1, 'sawtooth'); }
+    function playPowerup() {
+        playSound(523, 0.1);
+        setTimeout(() => playSound(659, 0.1), 100);
+        setTimeout(() => playSound(784, 0.1), 200);
+    }
+    function playDeath() {
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => playSound(400 - i * 50, 0.15), i * 100);
+        }
+    }
+
+    // ==================== INIT ====================
+    function init() {
+        canvas = document.getElementById('game-canvas');
+        ctx = canvas.getContext('2d');
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Event listeners
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('pause-btn').addEventListener('click', togglePause);
+        document.getElementById('resume-btn').addEventListener('click', togglePause);
+        document.getElementById('menu-btn').addEventListener('click', goToMenu);
+        document.getElementById('retry-btn').addEventListener('click', retry);
+        document.getElementById('gameover-menu').addEventListener('click', goToMenu);
+        document.getElementById('next-level').addEventListener('click', nextLevel);
+        document.getElementById('play-again').addEventListener('click', () => { currentLevel = 1; startGame(); });
+
+        // Touch controls
+        setupTouchControls();
+
+        // Keyboard
+        window.addEventListener('keydown', e => {
+            if (e.key === 'ArrowUp' || e.key === 'w') keys.up = true;
+            if (e.key === 'ArrowDown' || e.key === 's') keys.down = true;
+            if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+            if (e.key === ' ') fire('up');
+            if (e.key === 'Escape') togglePause();
+        });
+        window.addEventListener('keyup', e => {
+            if (e.key === 'ArrowUp' || e.key === 'w') keys.up = false;
+            if (e.key === 'ArrowDown' || e.key === 's') keys.down = false;
+            if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+        });
+
+        // Start loop
+        requestAnimationFrame(gameLoop);
+    }
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    function setupTouchControls() {
+        const joystick = document.getElementById('joystick');
+        const knob = document.getElementById('joystick-knob');
+
+        joystick.addEventListener('touchstart', e => {
+            e.preventDefault();
+            joystickActive = true;
+            const rect = joystick.getBoundingClientRect();
+            joystickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        });
+
+        joystick.addEventListener('touchmove', e => {
+            e.preventDefault();
+            if (!joystickActive) return;
+            const touch = e.touches[0];
+            const dx = touch.clientX - joystickCenter.x;
+            const dy = touch.clientY - joystickCenter.y;
+            const dist = Math.min(Math.sqrt(dx * dx + dy * dy), 35);
+            const angle = Math.atan2(dy, dx);
+            knob.style.transform = `translate(calc(-50% + ${Math.cos(angle) * dist}px), calc(-50% + ${Math.sin(angle) * dist}px))`;
+            keys.left = dx < -15;
+            keys.right = dx > 15;
+            keys.up = dy < -15;
+            keys.down = dy > 15;
+        });
+
+        joystick.addEventListener('touchend', () => {
+            joystickActive = false;
+            knob.style.transform = 'translate(-50%, -50%)';
+            keys.up = keys.down = keys.left = keys.right = false;
+        });
+
+        // Fire buttons
+        document.querySelectorAll('.fire-btn').forEach(btn => {
+            btn.addEventListener('touchstart', e => {
+                e.preventDefault();
+                fire(btn.id.replace('fire-', ''));
+            });
+        });
+    }
+
+    // ==================== GAME STATES ====================
+    function startGame() {
+        initAudio();
+        document.getElementById('intro-screen').style.display = 'none';
+        document.getElementById('hud').style.display = 'flex';
+        document.getElementById('controls').style.display = 'flex';
+        document.getElementById('pause-btn').style.display = 'block';
+
+        score = 0;
+        lives = 3;
+        startLevel(currentLevel);
+        gameState = 'playing';
+    }
+
+    function startLevel(level) {
+        currentLevel = level;
+        const config = LEVELS[level];
+
+        // Reset
+        bullets = [];
+        enemies = [];
+        enemyBullets = [];
+        particles = [];
+        powerups = [];
+        boss = null;
+        bossSpawned = false;
+        enemiesSpawned = 0;
+        powerup = null;
+
+        // Create player
+        player = {
+            x: canvas.width / 2 - 20,
+            y: canvas.height - 100,
+            width: 40,
+            height: 50,
+            speed: 5
+        };
+
+        // Announce level
+        document.getElementById('announce-level').textContent = 'NIVEL ' + level;
+        document.getElementById('announce-planet').textContent = config.name;
+        document.getElementById('level-announce').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('level-announce').style.display = 'none';
+        }, 2000);
+
+        updateHUD();
+    }
+
+    function togglePause() {
+        if (gameState === 'playing') {
+            gameState = 'paused';
+            document.getElementById('pause-screen').style.display = 'flex';
+        } else if (gameState === 'paused') {
+            gameState = 'playing';
+            document.getElementById('pause-screen').style.display = 'none';
+        }
+    }
+
+    function goToMenu() {
+        gameState = 'intro';
+        document.querySelectorAll('.overlay').forEach(o => o.style.display = 'none');
+        document.getElementById('intro-screen').style.display = 'flex';
+        document.getElementById('hud').style.display = 'none';
+        document.getElementById('controls').style.display = 'none';
+        document.getElementById('pause-btn').style.display = 'none';
+    }
+
+    function retry() {
+        document.querySelectorAll('.overlay').forEach(o => o.style.display = 'none');
+        score = 0;
+        lives = 3;
+        startLevel(currentLevel);
+        gameState = 'playing';
+    }
+
+    function nextLevel() {
+        document.querySelectorAll('.overlay').forEach(o => o.style.display = 'none');
+        currentLevel++;
+        if (currentLevel > 10) {
+            showVictory();
+        } else {
+            startLevel(currentLevel);
+            gameState = 'playing';
+        }
+    }
+
+    function showGameOver() {
+        gameState = 'gameover';
+        document.getElementById('final-score').textContent = score;
+        document.getElementById('final-level').textContent = currentLevel;
+        document.getElementById('gameover-screen').style.display = 'flex';
+        playDeath();
+    }
+
+    function showVictory() {
+        gameState = 'victory';
+        document.getElementById('victory-score').textContent = score;
+        document.getElementById('victory-screen').style.display = 'flex';
+    }
+
+    function showLevelComplete() {
+        gameState = 'levelcomplete';
+        document.getElementById('level-score').textContent = score;
+
+        // Calculate stars
+        const thresholds = [500, 1500, 3000];
+        let stars = 0;
+        if (score >= thresholds[0]) stars = 1;
+        if (score >= thresholds[1]) stars = 2;
+        if (score >= thresholds[2]) stars = 3;
+        document.getElementById('stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+
+        document.getElementById('levelcomplete-screen').style.display = 'flex';
+    }
+
+    // ==================== GAME LOOP ====================
+    let lastTime = 0;
+    let spawnTimer = 0;
+
+    function gameLoop(time) {
+        const dt = time - lastTime;
+        lastTime = time;
+
+        if (gameState === 'playing') {
+            update(dt);
+        }
+
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function update(dt) {
+        // Player movement
+        if (keys.up) player.y -= player.speed;
+        if (keys.down) player.y += player.speed;
+        if (keys.left) player.x -= player.speed;
+        if (keys.right) player.x += player.speed;
+
+        // Bounds
+        player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+        player.y = Math.max(50, Math.min(canvas.height - player.height - 150, player.y));
+
+        // Invincibility
+        if (invincible) {
+            invincibleTimer -= dt;
+            if (invincibleTimer <= 0) invincible = false;
+        }
+
+        // Powerup timer
+        if (powerup && powerup !== 'LIFE') {
+            powerupTimer -= dt;
+            if (powerupTimer <= 0) powerup = null;
+        }
+
+        // Spawn enemies
+        const config = LEVELS[currentLevel];
+        spawnTimer += dt;
+
+        if (!bossSpawned && enemiesSpawned < config.enemies && spawnTimer > 1500) {
+            spawnEnemy();
+            enemiesSpawned++;
+            spawnTimer = 0;
+        }
+
+        // Check if should spawn boss
+        if (!bossSpawned && enemiesSpawned >= config.enemies && enemies.length === 0) {
+            spawnBoss();
+        }
+
+        // Update bullets
+        bullets.forEach(b => {
+            b.x += b.dx * b.speed;
+            b.y += b.dy * b.speed;
+            b.active = b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height;
+        });
+        bullets = bullets.filter(b => b.active);
+
+        // Update enemy bullets
+        enemyBullets.forEach(b => {
+            b.x += b.dx * b.speed;
+            b.y += b.dy * b.speed;
+            b.active = b.x > 0 && b.x < canvas.width && b.y > 0 && b.y < canvas.height;
+        });
+        enemyBullets = enemyBullets.filter(b => b.active);
+
+        // Update enemies
+        enemies.forEach(e => {
+            e.y += e.speed;
+            if (e.y > canvas.height - 150) e.speed = -Math.abs(e.speed);
+            if (e.y < 50) e.speed = Math.abs(e.speed);
+
+            // Shoot
+            e.shootTimer -= dt;
+            if (e.shootTimer <= 0 && Math.random() < 0.3) {
+                const angle = Math.atan2(player.y - e.y, player.x - e.x);
+                enemyBullets.push({
+                    x: e.x + e.width / 2,
+                    y: e.y + e.height,
+                    dx: Math.cos(angle) * 4,
+                    dy: Math.sin(angle) * 4,
+                    speed: 4,
+                    active: true
+                });
+                e.shootTimer = 2000;
+            }
+        });
+
+        // Update boss
+        if (boss) {
+            boss.x += boss.dx * boss.speed;
+            boss.y = 60 + Math.sin(Date.now() / 500) * 20;
+            if (boss.x < 20 || boss.x > canvas.width - boss.width - 20) {
+                boss.dx *= -1;
+            }
+
+            // Boss shooting
+            boss.shootTimer -= dt;
+            if (boss.shootTimer <= 0) {
+                const angle = Math.atan2(player.y - boss.y, player.x - boss.x);
+                enemyBullets.push({
+                    x: boss.x + boss.width / 2,
+                    y: boss.y + boss.height,
+                    dx: Math.cos(angle) * 5,
+                    dy: Math.sin(angle) * 5,
+                    speed: 5,
+                    active: true
+                });
+                boss.shootTimer = 1000 - boss.phase * 200;
+            }
+        }
+
+        // Update powerups
+        powerups.forEach(p => {
+            p.y += p.speed;
+            p.active = p.y < canvas.height;
+        });
+        powerups = powerups.filter(p => p.active);
+
+        // Update particles
+        particles.forEach(p => {
+            p.x += p.dx;
+            p.y += p.dy;
+            p.life -= 0.02;
+            p.active = p.life > 0;
+        });
+        particles = particles.filter(p => p.active);
+
+        // Collisions
+        checkCollisions();
+
+        // Update HUD
+        updateHUD();
+    }
+
+    function spawnEnemy() {
+        const types = ['basic', 'flying'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        enemies.push({
+            x: Math.random() * (canvas.width - 40),
+            y: 50 + Math.random() * 100,
+            width: 35,
+            height: 35,
+            speed: 1 + Math.random() * 2,
+            color: type === 'basic' ? '#f44' : '#4f4',
+            hp: 20,
+            shootTimer: 2000,
+            type: type
+        });
+    }
+
+    function spawnBoss() {
+        bossSpawned = true;
+        const config = LEVELS[currentLevel];
+        boss = {
+            x: canvas.width / 2 - 60,
+            y: -100,
+            width: 120,
+            height: 80,
+            hp: config.bossHP,
+            maxHp: config.bossHP,
+            dx: 1,
+            speed: 2,
+            phase: 1,
+            shootTimer: 1500
+        };
+
+        // Animate boss entering
+        const enterBoss = () => {
+            if (boss.y < 60) {
+                boss.y += 3;
+                requestAnimationFrame(enterBoss);
+            }
+        };
+        enterBoss();
+
+        document.getElementById('boss-name').textContent = currentLevel === 10 ? 'MALVADO DR. Z' : 'MINIBOSS';
+        document.getElementById('boss-bar').style.display = 'block';
+        document.getElementById('boss-health-fill').style.width = '100%';
+    }
+
+    function checkCollisions() {
+        // Player bullets vs enemies
+        bullets.forEach(b => {
+            enemies.forEach(e => {
+                if (b.active && e.hp > 0 &&
+                    b.x > e.x && b.x < e.x + e.width &&
+                    b.y > e.y && b.y < e.y + e.height) {
+                    b.active = false;
+                    e.hp -= 10;
+                    if (e.hp <= 0) {
+                        score += 100;
+                        createExplosion(e.x + e.width/2, e.y + e.height/2, e.color);
+                        playExplosion();
+                        if (Math.random() < 0.2) spawnPowerup(e.x, e.y);
+                    } else {
+                        playHit();
+                    }
+                }
+            });
+
+            // Bullets vs boss
+            if (boss && b.active &&
+                b.x > boss.x && b.x < boss.x + boss.width &&
+                b.y > boss.y && b.y < boss.y + boss.height) {
+                b.active = false;
+                boss.hp -= 10;
+                document.getElementById('boss-health-fill').style.width = (boss.hp / boss.maxHp * 100) + '%';
+                playHit();
+
+                if (boss.hp <= 0) {
+                    score += boss.maxHp;
+                    createExplosion(boss.x + boss.width/2, boss.y + boss.height/2, '#f00');
+                    playExplosion();
+                    document.getElementById('boss-bar').style.display = 'none';
+                    boss = null;
+
+                    if (currentLevel === 10) {
+                        setTimeout(showVictory, 1500);
+                    } else {
+                        setTimeout(showLevelComplete, 1500);
+                    }
+                }
+            }
+        });
+
+        // Enemy bullets vs player
+        if (!invincible) {
+            enemyBullets.forEach(b => {
+                if (b.active &&
+                    b.x > player.x && b.x < player.x + player.width &&
+                    b.y > player.y && b.y < player.y + player.height) {
+                    b.active = false;
+                    takeDamage();
+                }
+            });
+
+            // Enemies vs player
+            enemies.forEach(e => {
+                if (e.hp > 0 &&
+                    player.x < e.x + e.width &&
+                    player.x + player.width > e.x &&
+                    player.y < e.y + e.height &&
+                    player.y + player.height > e.y) {
+                    takeDamage();
+                    e.hp = 0;
+                    createExplosion(e.x + e.width/2, e.y + e.height/2, e.color);
+                }
+            });
+        }
+
+        // Powerups vs player
+        powerups.forEach(p => {
+            if (p.active &&
+                player.x < p.x + p.width &&
+                player.x + player.width > p.x &&
+                player.y < p.y + p.height &&
+                player.y + player.height > p.y) {
+                p.active = false;
+                activatePowerup(p.type);
+            }
+        });
+
+        // Remove dead enemies
+        enemies = enemies.filter(e => e.hp > 0);
+    }
+
+    function takeDamage() {
+        lives--;
+        createExplosion(player.x + player.width/2, player.y + player.height/2, '#f00');
+
+        if (lives <= 0) {
+            showGameOver();
+        } else {
+            invincible = true;
+            invincibleTimer = 2000;
+            playDeath();
+        }
+    }
+
+    function fire(direction) {
+        if (gameState !== 'playing' || !player) return;
+
+        let dx = 0, dy = -1;
+        if (direction === 'down') dy = 1;
+        if (direction === 'left') { dx = -1; dy = 0; }
+        if (direction === 'right') { dx = 1; dy = 0; }
+
+        const bullet = {
+            x: player.x + player.width / 2,
+            y: player.y,
+            dx: dx,
+            dy: dy,
+            speed: 10,
+            active: true
+        };
+
+        if (powerup === 'TRIPLE') {
+            if (dy !== 0) {
+                bullets.push({...bullet, dy: dy});
+                bullets.push({...bullet, dx: -0.3, dy: dy});
+                bullets.push({...bullet, dx: 0.3, dy: dy});
+            } else {
+                bullets.push({...bullet, dx: dx});
+                bullets.push({...bullet, dx: dx, dy: -0.3});
+                bullets.push({...bullet, dx: dx, dy: 0.3});
+            }
+        } else {
+            bullets.push(bullet);
+        }
+
+        playShoot();
+    }
+
+    function spawnPowerup(x, y) {
+        const types = ['SHIELD', 'TRIPLE', 'SPEED', 'LIFE'];
+        powerups.push({
+            x: x,
+            y: y,
+            width: 30,
+            height: 30,
+            type: types[Math.floor(Math.random() * types.length)],
+            speed: 1.5,
+            active: true
+        });
+    }
+
+    function activatePowerup(type) {
+        playPowerup();
+
+        if (type === 'LIFE') {
+            lives = Math.min(5, lives + 1);
+        } else if (type === 'BOMB') {
+            enemies.forEach(e => {
+                score += 100;
+                createExplosion(e.x + e.width/2, e.y + e.height/2, e.color);
+            });
+            enemies = [];
+            enemyBullets = [];
+            playExplosion();
+        } else {
+            powerup = type;
+            powerupTimer = 5000;
+        }
+
+        createExplosion(player.x + player.width/2, player.y + player.height/2, '#ff0');
+    }
+
+    function createExplosion(x, y, color) {
+        for (let i = 0; i < 10; i++) {
+            particles.push({
+                x: x,
+                y: y,
+                dx: (Math.random() - 0.5) * 8,
+                dy: (Math.random() - 0.5) * 8,
+                color: color,
+                life: 1,
+                active: true
+            });
+        }
+    }
+
+    function updateHUD() {
+        document.getElementById('lives').textContent = '❤'.repeat(Math.max(0, lives));
+        document.getElementById('score').textContent = score;
+        document.getElementById('level').textContent = currentLevel;
+        document.getElementById('powerup').textContent = powerup || '-';
+    }
+
+    // ==================== DRAW ====================
+    function draw() {
+        const config = LEVELS[currentLevel] || { bg: '#0a0a1a' };
+
+        // Clear
+        ctx.fillStyle = gameState === 'intro' ? '#050510' : config.bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Stars
+        drawStars();
+
+        if (gameState === 'playing' || gameState === 'paused') {
+            // Particles
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            // Powerups
+            powerups.forEach(p => {
+                ctx.fillStyle = p.type === 'SHIELD' ? '#0ff' :
+                               p.type === 'TRIPLE' ? '#ff0' :
+                               p.type === 'SPEED' ? '#0f0' : '#f00';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.type[0], p.x, p.y + 4);
+            });
+
+            // Enemies
+            enemies.forEach(e => {
+                ctx.fillStyle = e.color;
+                ctx.beginPath();
+                ctx.ellipse(e.x + e.width/2, e.y + e.height/2, e.width/2, e.height/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Eyes
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(e.x + 10, e.y + 12, 5, 0, Math.PI * 2);
+                ctx.arc(e.x + 25, e.y + 12, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(e.x + 11, e.y + 12, 2, 0, Math.PI * 2);
+                ctx.arc(e.x + 26, e.y + 12, 2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Boss
+            if (boss) {
+                ctx.fillStyle = '#f00';
+                ctx.beginPath();
+                ctx.ellipse(boss.x + boss.width/2, boss.y + boss.height/2, boss.width/2, boss.height/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(boss.x + boss.width/2, boss.y + boss.height/3, 20, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#f00';
+                ctx.beginPath();
+                ctx.arc(boss.x + boss.width/2, boss.y + boss.height/3, 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Player
+            if (player) {
+                if (!invincible || Math.floor(Date.now() / 100) % 2 === 0) {
+                    // Body
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.ellipse(player.x + player.width/2, player.y + player.height/2 + 5, 15, 20, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Helmet
+                    ctx.fillStyle = '#0ff';
+                    ctx.beginPath();
+                    ctx.ellipse(player.x + player.width/2, player.y + 15, 12, 14, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Visor
+                    ctx.fillStyle = '#036';
+                    ctx.beginPath();
+                    ctx.ellipse(player.x + player.width/2, player.y + 15, 8, 10, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Shield
+                    if (powerup === 'SHIELD') {
+                        ctx.strokeStyle = '#0ff';
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(player.x + player.width/2, player.y + player.height/2, 35, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Bullets
+            ctx.fillStyle = '#0ff';
+            bullets.forEach(b => {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.fillStyle = '#f00';
+            enemyBullets.forEach(b => {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+    }
+
+    function drawStars() {
+        for (let i = 0; i < 50; i++) {
+            const x = (i * 137.5) % canvas.width;
+            const y = (i * 97.3) % canvas.height;
+            const size = (i % 3) + 1;
+            const alpha = 0.3 + (Math.sin(Date.now() / 1000 + i) + 1) / 4;
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Start
+    window.addEventListener('load', init);
+    </script>
+
+<script>
+/**
+ * Iframe 元素高亮注入脚本
+ * 需要在目标网站中引入此脚本来支持跨域 iframe 高亮功能
+ *
+ * 使用方法：
+ * 1. 将此脚本添加到目标网站的 HTML 中
+ * 2. 或通过浏览器扩展、用户脚本等方式注入
+ */
+
+(function () {
+  "use strict";
+
+  // 检查是否在 iframe 中
+  if (window.self === window.top) {
+    return; // 不在 iframe 中，不执行
+  }
+
+  // 检查是否已经初始化过
+  if (window.__iframeHighlightInitialized) {
+    return;
+  }
+  window.__iframeHighlightInitialized = true;
+  console.log("Iframe 高亮脚本已加载");
+
+  // 创建高亮覆盖层
+  var overlay = document.createElement("div");
+  overlay.id = "iframe-highlight-overlay";
+  overlay.style.cssText = "\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100vw;\n    height: 100vh;\n    pointer-events: none;\n    z-index: 999999;\n    overflow: hidden;\n  ";
+
+  // 创建悬停高亮框（虚线边框）
+  var highlightBox = document.createElement("div");
+  highlightBox.id = "iframe-highlight-box";
+  highlightBox.style.cssText = "\n    position: absolute;\n    border: 2px dashed #007AFF;\n    background: rgba(0, 122, 255, 0.08);\n    pointer-events: none;\n    display: none;\n    transition: all 0.1s ease;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);\n    border-radius: 2px;\n  ";
+
+  // 创建选中节点的常驻高亮框（实线边框）
+  var selectedBox = document.createElement("div");
+  selectedBox.id = "iframe-selected-box";
+  selectedBox.style.cssText = "\n    position: absolute;\n    border: 2px solid #007AFF;\n    pointer-events: none;\n    display: none;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 107, 53, 0.4);\n    border-radius: 2px;\n    z-index: 1000000;\n  ";
+
+  // 创建悬停标签显示
+  var tagLabel = document.createElement("div");
+  tagLabel.id = "iframe-tag-label";
+  tagLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 2px 6px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 2px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000001;\n    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n    font-weight: 500;\n  ";
+
+  // 创建选中节点标签
+  var selectedLabel = document.createElement("div");
+  selectedLabel.id = "iframe-selected-label";
+  selectedLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 3px 8px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 3px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000002;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);\n    font-weight: 600;\n  ";
+  overlay.appendChild(highlightBox);
+  overlay.appendChild(selectedBox);
+  overlay.appendChild(tagLabel);
+  overlay.appendChild(selectedLabel);
+  document.body.appendChild(overlay);
+
+  // 存储当前选中的元素
+  var selectedElement = null;
+  var highlightEnabled = false;
+
+  // 更新选中元素的高亮显示
+  function updateSelectedHighlight(element) {
+    console.log("updateSelectedHighlight called with:", element);
+    if (!element) {
+      selectedBox.style.display = "none";
+      selectedLabel.style.display = "none";
+      selectedElement = null;
+      console.log("Cleared selected highlight");
+      return;
+    }
+    selectedElement = element;
+    var rect = element.getBoundingClientRect();
+    console.log("Selected element rect:", rect);
+
+    // 更新选中高亮框位置
+    selectedBox.style.display = "block";
+    selectedBox.style.left = "".concat(rect.left - 2, "px");
+    selectedBox.style.top = "".concat(rect.top - 2, "px");
+    selectedBox.style.width = "".concat(rect.width + 4, "px");
+    selectedBox.style.height = "".concat(rect.height + 4, "px");
+
+    // 更新选中标签位置和内容
+    selectedLabel.style.display = "block";
+    selectedLabel.textContent = "\u2713 <".concat(element.tagName.toLowerCase(), ">");
+
+    // 计算标签位置，确保不超出视窗
+    var labelTop = rect.top - 28;
+    var labelLeft = rect.left;
+
+    // 如果标签会超出顶部，显示在元素下方
+    if (labelTop < 5) {
+      labelTop = rect.bottom + 5;
+    }
+
+    // 如果标签会超出右侧，向左调整
+    var labelWidth = selectedLabel.offsetWidth || 100; // 预估宽度
+    if (labelLeft + labelWidth > window.innerWidth - 10) {
+      labelLeft = window.innerWidth - labelWidth - 10;
+    }
+    selectedLabel.style.left = "".concat(Math.max(5, labelLeft), "px");
+    selectedLabel.style.top = "".concat(labelTop, "px");
+    console.log("Selected highlight positioned at:", {
+      left: selectedBox.style.left,
+      top: selectedBox.style.top,
+      width: selectedBox.style.width,
+      height: selectedBox.style.height
+    });
+  }
+  function getElementSelector(element) {
+    if (!(element instanceof Element)) throw new Error('Argument must be a DOM element');
+    var segments = [];
+    var current = element;
+    while (current !== document.documentElement) {
+      var selector = '';
+      // 优先检查唯一ID
+      if (current.id && document.querySelectorAll("#".concat(current.id)).length === 1) {
+        segments.unshift("#".concat(current.id));
+        break; // ID唯一，无需继续向上
+      }
+
+      // 生成类名选择器（取第一个有效类名）
+      var classes = Array.from(current.classList).filter(function (c) {
+        return !c.startsWith('js-');
+      });
+      var className = classes.length > 0 ? ".".concat(classes[0]) : '';
+
+      // 生成位置索引（nth-child）
+      var tag = current.tagName.toLowerCase();
+      if (!className) {
+        var siblings = Array.from(current.parentNode.children);
+        var index = siblings.findIndex(function (el) {
+          return el === current;
+        }) + 1;
+        selector = "".concat(tag, ":nth-child(").concat(index, ")");
+      } else {
+        selector = className;
+      }
+      segments.unshift(selector);
+      current = current.parentElement;
+    }
+
+    // 处理根元素
+    if (current === document.documentElement) {
+      segments.unshift('html');
+    }
+    return segments.join(' > ');
+  }
+
+  // 获取元素文本内容
+  function getElementText(element) {
+    var _element$textContent;
+    if (element.tagName === "INPUT") {
+      return element.value || element.placeholder || "";
+    }
+    if (element.tagName === "TEXTAREA") {
+      return element.value || element.placeholder || "";
+    }
+    var text = ((_element$textContent = element.textContent) === null || _element$textContent === void 0 ? void 0 : _element$textContent.trim()) || "";
+    return text.length > 50 ? text.substring(0, 50) + "..." : text;
+  }
+
+  // 获取元素属性信息
+  function getElementAttributes(element) {
+    var attrs = {};
+    for (var i = 0; i < element.attributes.length; i++) {
+      var attr = element.attributes[i];
+      attrs[attr.name] = attr.value;
+    }
+    return attrs;
+  }
+
+  // 鼠标悬停事件处理
+  function handleMouseOver(e) {
+    if (!highlightEnabled) return;
+    var target = e.target;
+    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
+      return;
+    }
+
+    // 避免高亮 html 和 body 元素
+    if (target === document.documentElement || target === document.body) {
+      return;
+    }
+
+    // 如果是已选中的元素，不显示悬停高亮
+    if (target === selectedElement) {
+      highlightBox.style.display = "none";
+      tagLabel.style.display = "none";
+      return;
+    }
+    var rect = target.getBoundingClientRect();
+    var selector = getElementSelector(target);
+    var text = getElementText(target);
+    var attributes = getElementAttributes(target);
+
+    // 更新悬停高亮框位置
+    highlightBox.style.display = "block";
+    highlightBox.style.left = "".concat(rect.left - 2, "px");
+    highlightBox.style.top = "".concat(rect.top - 2, "px");
+    highlightBox.style.width = "".concat(rect.width + 4, "px");
+    highlightBox.style.height = "".concat(rect.height + 4, "px");
+
+    // 更新标签位置和内容
+    tagLabel.style.display = "block";
+    tagLabel.textContent = "<".concat(target.tagName.toLowerCase(), ">");
+
+    // 计算标签位置，确保不超出视窗
+    var labelTop = rect.top - 22;
+    var labelLeft = rect.left;
+
+    // 如果标签会超出顶部，显示在元素下方
+    if (labelTop < 0) {
+      labelTop = rect.bottom + 5;
+    }
+
+    // 如果标签会超出右侧，向左调整
+    if (labelLeft + tagLabel.offsetWidth > window.innerWidth) {
+      labelLeft = window.innerWidth - tagLabel.offsetWidth - 5;
+    }
+    tagLabel.style.left = "".concat(Math.max(0, labelLeft), "px");
+    tagLabel.style.top = "".concat(labelTop, "px");
+
+    // 发送消息到父窗口
+    var elementInfo = {
+      tagName: target.tagName.toLowerCase(),
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y
+      },
+      selector: selector,
+      text: text,
+      attributes: attributes,
+      url: window.location.href,
+      path: window.location.pathname,
+      timestamp: Date.now()
+    };
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-hover",
+        data: elementInfo,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 鼠标离开事件处理
+  function handleMouseOut(e) {
+    if (!highlightEnabled) return;
+    var relatedTarget = e.relatedTarget;
+
+    // 如果鼠标移动到高亮相关元素上，不隐藏高亮
+    if (relatedTarget && (relatedTarget === highlightBox || relatedTarget === tagLabel || relatedTarget === overlay || relatedTarget === selectedBox || relatedTarget === selectedLabel)) {
+      return;
+    }
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-hover",
+        data: null,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 点击事件处理
+  function handleClick(e) {
+    var target = e.target;
+    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
+      return;
+    }
+
+    // 避免处理 html 和 body 元素
+    if (target === document.documentElement || target === document.body) {
+      return;
+    }
+
+    // 检查是否是交互元素，这些元素需要保留默认行为
+    var isInteractiveElement = ['input', 'textarea', 'select', 'button', 'a'].includes(target.tagName.toLowerCase());
+
+    // 如果高亮功能启用，对于非交互元素阻止默认行为和事件传播
+    if (highlightEnabled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    var rect = target.getBoundingClientRect();
+    var selector = getElementSelector(target);
+    var text = getElementText(target);
+    var attributes = getElementAttributes(target);
+    console.log("Element clicked:", {
+      tagName: target.tagName,
+      selector: selector,
+      rect: rect
+    });
+
+    // 立即更新选中高亮
+    updateSelectedHighlight(target);
+
+    // 隐藏悬停高亮，因为现在是选中状态
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    var elementInfo = {
+      tagName: target.tagName.toLowerCase(),
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y
+      },
+      selector: selector,
+      text: text,
+      attributes: attributes,
+      url: window.location.href,
+      path: window.location.pathname,
+      timestamp: Date.now()
+    };
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-click",
+        data: elementInfo,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 监听来自父窗口的消息
+  function handleParentMessage(event) {
+    console.log("Received message from parent:", event.data);
+    if (event.data.type === "iframe-highlight-toggle") {
+      var enabled = event.data.enabled;
+      console.log("Highlight toggle:", enabled);
+      if (enabled) {
+        enableHighlight();
+      } else {
+        disableHighlight();
+      }
+    } else if (event.data.type === "enable-iframe-highlight") {
+      console.log("Enable iframe highlight");
+      enableHighlight();
+    } else if (event.data.type === "disable-iframe-highlight") {
+      console.log("Disable iframe highlight");
+      disableHighlight();
+    } else if (event.data.type === "toggle-iframe-highlight") {
+      var _enabled = event.data.enabled !== undefined ? event.data.enabled : !highlightEnabled;
+      console.log("Toggle iframe highlight to:", _enabled);
+      if (_enabled) {
+        enableHighlight();
+      } else {
+        disableHighlight();
+      }
+    } else if (event.data.type === "update-selected-element") {
+      var selector = event.data.selector;
+      console.log("Update selected element with selector:", selector);
+      if (selector) {
+        try {
+          var element = document.querySelector(selector);
+          console.log("Found element by selector:", element);
+          updateSelectedHighlight(element);
+        } catch (error) {
+          console.warn("Failed to select element:", error);
+          updateSelectedHighlight(null);
+        }
+      } else {
+        updateSelectedHighlight(null);
+      }
+    } else if (event.data.type === "clear-selected-element") {
+      console.log("Clear selected element");
+      updateSelectedHighlight(null);
+    }
+  }
+
+  // 启用高亮功能
+  function enableHighlight() {
+    console.log("Enabling highlight");
+    document.addEventListener("mouseover", handleMouseOver, true);
+    document.addEventListener("mouseout", handleMouseOut, true);
+    document.addEventListener("click", handleClick, true);
+    highlightEnabled = true;
+    overlay.style.display = "block";
+  }
+
+  // 禁用高亮功能
+  function disableHighlight() {
+    console.log("Disabling highlight");
+    highlightEnabled = false;
+    // 保持事件监听器，但通过 highlightEnabled 变量控制行为
+    // 这样可以保留选中状态的显示
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    // 不隐藏 selectedBox 和 selectedLabel，保留选中状态
+  }
+
+  // 完全禁用高亮功能（移除所有监听器）
+  function fullyDisableHighlight() {
+    console.log("Fully disabling highlight");
+    highlightEnabled = false;
+    document.removeEventListener("mouseover", handleMouseOver, true);
+    document.removeEventListener("mouseout", handleMouseOut, true);
+    document.removeEventListener("click", handleClick, true);
+    overlay.style.display = "none";
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    selectedBox.style.display = "none";
+    selectedLabel.style.display = "none";
+  }
+
+  // 添加事件监听
+  enableHighlight();
+  window.addEventListener("message", handleParentMessage);
+
+  // 暴露全局函数供外部调用
+  window.__iframeHighlightControl = {
+    enable: enableHighlight,
+    disable: disableHighlight,
+    fullyDisable: fullyDisableHighlight,
+    isEnabled: function isEnabled() {
+      return highlightEnabled;
+    },
+    getSelectedElement: function getSelectedElement() {
+      return selectedElement;
+    },
+    updateSelected: updateSelectedHighlight,
+    // 通过消息发送开关控制
+    sendToggleMessage: function sendToggleMessage(enabled) {
+      window.parent.postMessage({
+        type: 'iframe-highlight-status',
+        enabled: enabled || highlightEnabled,
+        source: 'iframe-highlight-injector'
+      }, '*');
+    }
+  };
+
+  // 通知父窗口脚本已加载
+  try {
+    window.parent.postMessage({
+      type: "iframe-highlight-ready",
+      data: {
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: Date.now()
+      },
+      source: "iframe-highlight-injector"
+    }, "*");
+  } catch (error) {
+    console.warn("无法发送就绪消息到父窗口:", error);
+  }
+
+  // 清理函数
+  window.__iframeHighlightCleanup = function () {
+    fullyDisableHighlight();
+    window.removeEventListener("message", handleParentMessage);
+    if (overlay.parentElement) {
+      overlay.parentElement.removeChild(overlay);
+    }
+    delete window.__iframeHighlightInitialized;
+    delete window.__iframeHighlightCleanup;
+  };
+})();
+
+</script>
+</body>
+</html>
